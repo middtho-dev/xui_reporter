@@ -14,7 +14,7 @@
 ### 🔸 Быстрая установка через GitHub
 
 ```bash
-bash <(wget -O - https://raw.githubusercontent.com/middtho-dev/xui_reporter/main/xui_reporter.sh)
+sh <(wget -qO - https://raw.githubusercontent.com/middtho-dev/xui_reporter/main/xui_reporter.sh)
 ```
 
 После запуска отобразится меню с выбором:
