@@ -21,14 +21,14 @@ print_menu() {
 }
 
 run_install_interactive() {
-  read -p "Название сервера: " SERVER_NAME
+  read -p "Название сервера (например, vln.kv9.ru): " SERVER_NAME
   read -p "Задержка перед отправкой (в секундах): " DELAY
   install_script "$SERVER_NAME" "$DELAY"
 }
 
 run_install_args() {
-  SERVER_NAME="${1#--}"
-  DELAY="${2#--}"
+  SERVER_NAME="$1"
+  DELAY="$2"
   install_script "$SERVER_NAME" "$DELAY"
 }
 
@@ -44,11 +44,13 @@ sleep $DELAY
 
 send_file() {
   FILE="\$1"
-  LABEL="\$2"
+  TITLE="\$2"
+  BASENAME=\$(basename "\$FILE")
   [ -f "\$FILE" ] || return
 
-  CAPTION="📡 *$SERVER_NAME*
-\$LABEL"
+  CAPTION="\$TITLE
+🖥️ Сервер: $SERVER_NAME
+📁 Файл: \$BASENAME"
 
   curl -s -F chat_id=$CHAT_ID \
        -F document=@"\$FILE" \
@@ -62,11 +64,6 @@ send_file "/usr/local/x-ui/access.log" "📜 Access Log"
 send_file "/usr/local/x-ui/error.log" "❗ Error Log"
 send_file "/etc/x-ui/x-ui.db" "💾 База данных"
 EOF
-
-  # Обновим: удалим экранирование переменных внутри heredoc
-  sed -i 's/\\\$LABEL/$LABEL/g' "$SEND_SCRIPT"
-  sed -i 's/\\\$FILE/$FILE/g' "$SEND_SCRIPT"
-  sed -i 's/\\\$CAPTION/$CAPTION/g' "$SEND_SCRIPT"
 
   chmod +x "$SEND_SCRIPT"
 
@@ -92,7 +89,7 @@ run_uninstall() {
 }
 
 # Аргументы командной строки
-if [ "$1" = "--vpn-node1" ] && [ "$2" = "--5" ]; then
+if [ -n "$1" ] && [ -n "$2" ]; then
   run_install_args "$1" "$2"
 else
   print_menu
