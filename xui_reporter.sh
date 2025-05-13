@@ -7,23 +7,27 @@ INSTALL_DIR="/usr/local/bin"
 SEND_SCRIPT="$INSTALL_DIR/send_xui_report.sh"
 CRON_JOB="0 * * * * $SEND_SCRIPT"
 
-menu() {
-  echo "Выберите действие:"
+print_menu() {
+  echo "======== X-UI REPORTER ========"
   echo "1. Установить"
   echo "2. Удалить"
-  read -p "> " choice
-  case "$choice" in
-    1) install ;;
-    2) uninstall ;;
-    *) echo "Неверный выбор"; exit 1 ;;
+  echo "3. Выйти"
+  echo "==============================="
+  read -p "Выберите: " action
+  case "$action" in
+    1) run_install ;;
+    2) run_uninstall ;;
+    3) exit 0 ;;
+    *) echo "❌ Неверный выбор"; exit 1 ;;
   esac
 }
 
-install() {
-  read -p "Введите название сервера: " SERVER_NAME
-  read -p "Введите задержку перед отправкой (в секундах): " DELAY
+run_install() {
+  read -p "Название сервера: " SERVER_NAME
+  read -p "Задержка перед отправкой (в секундах): " DELAY
 
-  # Создаём отправляющий скрипт
+  mkdir -p "$INSTALL_DIR"
+
   cat > "$SEND_SCRIPT" <<EOF
 #!/bin/bash
 sleep $DELAY
@@ -47,27 +51,27 @@ EOF
 
   chmod +x "$SEND_SCRIPT"
 
-  # Добавляем в крон
+  # Добавление в cron
   (crontab -l 2>/dev/null; echo "$CRON_JOB") | grep -v "^$" | sort -u | crontab -
 
-  # Уведомление об установке
+  # Уведомление и отправка файлов
   curl -s -X POST https://api.telegram.org/bot$BOT_TOKEN/sendMessage \
     -d chat_id="$CHAT_ID" \
     -d text="✅ Установлен агент на *$SERVER_NAME*. Задержка: ${DELAY}s" \
     -d parse_mode=Markdown > /dev/null
 
-  # Мгновенная отправка файлов
   bash "$SEND_SCRIPT"
+  echo "✅ Установка завершена."
 }
 
-uninstall() {
+run_uninstall() {
   crontab -l 2>/dev/null | grep -v "$SEND_SCRIPT" | crontab -
   rm -f "$SEND_SCRIPT"
   curl -s -X POST https://api.telegram.org/bot$BOT_TOKEN/sendMessage \
     -d chat_id="$CHAT_ID" \
     -d text="🗑️ Агент X-UI удалён с сервера" \
     > /dev/null
-  echo "✅ Удалено"
+  echo "✅ Удаление завершено."
 }
 
-menu
+print_menu
