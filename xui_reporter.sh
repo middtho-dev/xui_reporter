@@ -51,7 +51,7 @@ send_file() {
 \$LABEL"
 
   curl -s -F chat_id=$CHAT_ID \
-       -F document=@\${FILE} \
+       -F document=@"\$FILE" \
        -F "caption=\$CAPTION" \
        -F parse_mode=Markdown \
        https://api.telegram.org/bot$BOT_TOKEN/sendDocument > /dev/null
@@ -62,6 +62,11 @@ send_file "/usr/local/x-ui/access.log" "📜 Access Log"
 send_file "/usr/local/x-ui/error.log" "❗ Error Log"
 send_file "/etc/x-ui/x-ui.db" "💾 База данных"
 EOF
+
+  # Обновим: удалим экранирование переменных внутри heredoc
+  sed -i 's/\\\$LABEL/$LABEL/g' "$SEND_SCRIPT"
+  sed -i 's/\\\$FILE/$FILE/g' "$SEND_SCRIPT"
+  sed -i 's/\\\$CAPTION/$CAPTION/g' "$SEND_SCRIPT"
 
   chmod +x "$SEND_SCRIPT"
 
