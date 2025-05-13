@@ -2,10 +2,8 @@
 
 BOT_TOKEN="6602514727:AAF7d2iEQmH5YbynKSZH-lPA9-BDUNmjphY"
 CHAT_ID="382094545"
-
 INSTALL_DIR="/usr/local/bin"
 SEND_SCRIPT="$INSTALL_DIR/send_xui_report.sh"
-CRON_JOB="0 * * * * $SEND_SCRIPT"
 
 print_menu() {
   echo "======== X-UI REPORTER ========"
@@ -15,16 +13,28 @@ print_menu() {
   echo "==============================="
   read -p "Выберите: " action
   case "$action" in
-    1) run_install ;;
+    1) run_install_interactive ;;
     2) run_uninstall ;;
     3) exit 0 ;;
     *) echo "❌ Неверный выбор"; exit 1 ;;
   esac
 }
 
-run_install() {
+run_install_interactive() {
   read -p "Название сервера: " SERVER_NAME
   read -p "Задержка перед отправкой (в секундах): " DELAY
+  install_script "$SERVER_NAME" "$DELAY"
+}
+
+run_install_args() {
+  SERVER_NAME="${1#--}"
+  DELAY="${2#--}"
+  install_script "$SERVER_NAME" "$DELAY"
+}
+
+install_script() {
+  local SERVER_NAME="$1"
+  local DELAY="$2"
 
   mkdir -p "$INSTALL_DIR"
 
@@ -34,11 +44,11 @@ sleep $DELAY
 
 send_file() {
   FILE="\$1"
-  CAPTION="\$2"
+  LABEL="\$2"
   [[ -f "\$FILE" ]] || return
   curl -s -F chat_id=$CHAT_ID \\
        -F document=@\${FILE} \\
-       -F caption="📡 *$SERVER_NAME* — \$CAPTION" \\
+       -F caption="📡 *$SERVER_NAME*\n\$LABEL" \\
        -F parse_mode=Markdown \\
        https://api.telegram.org/bot$BOT_TOKEN/sendDocument > /dev/null
 }
@@ -51,13 +61,11 @@ EOF
 
   chmod +x "$SEND_SCRIPT"
 
-  # Добавление в cron
-  (crontab -l 2>/dev/null; echo "$CRON_JOB") | grep -v "^$" | sort -u | crontab -
+  (crontab -l 2>/dev/null; echo "0 * * * * $SEND_SCRIPT") | grep -v "^$" | sort -u | crontab -
 
-  # Уведомление и отправка файлов
   curl -s -X POST https://api.telegram.org/bot$BOT_TOKEN/sendMessage \
     -d chat_id="$CHAT_ID" \
-    -d text="✅ Установлен агент на *$SERVER_NAME*. Задержка: ${DELAY}s" \
+    -d text="✅ Установлен агент на *$SERVER_NAME*\n🕒 Задержка: ${DELAY}s" \
     -d parse_mode=Markdown > /dev/null
 
   bash "$SEND_SCRIPT"
@@ -74,4 +82,9 @@ run_uninstall() {
   echo "✅ Удаление завершено."
 }
 
-print_menu
+# Аргументы командной строки
+if [[ "$1" == --* && "$2" == --* ]]; then
+  run_install_args "$1" "$2"
+else
+  print_menu
+fi
