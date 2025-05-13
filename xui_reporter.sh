@@ -46,10 +46,13 @@ send_file() {
   FILE="\$1"
   LABEL="\$2"
   [ -f "\$FILE" ] || return
+
+  CAPTION="📡 *$SERVER_NAME*
+\$LABEL"
+
   curl -s -F chat_id=$CHAT_ID \
        -F document=@\${FILE} \
-       --data-urlencode "caption=📡 *$SERVER_NAME*
-\$LABEL" \
+       -F "caption=\$CAPTION" \
        -F parse_mode=Markdown \
        https://api.telegram.org/bot$BOT_TOKEN/sendDocument > /dev/null
 }
